@@ -5,19 +5,74 @@
 @section('breadcrumb', 'Background Checks')
 
 @section('content')
+@php
+    $rushCount = $requests->getCollection()->where('turnaround_time', 'rush')->count();
+    $standardCount = $requests->getCollection()->where('turnaround_time', 'standard')->count();
+@endphp
+
 <div class="row">
     <div class="col-12">
+        <!-- Top summary bar -->
+        <div class="row mb-3">
+            <div class="col-md-4 col-sm-6 mb-2">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3>{{ $requests->total() }}</h3>
+                        <p>Total Background Check Requests</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 mb-2">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ $standardCount }}</h3>
+                        <p>Standard Turnaround (this page)</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 mb-2">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{{ $rushCount }}</h3>
+                        <p>Rush Turnaround (this page)</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">All Background Check Requests</h3>
-                <div class="card-tools">
+            <div class="card-header border-0">
+                <h3 class="card-title">
+                    <i class="fas fa-table mr-2"></i>
+                    All Background Check Requests
+                </h3>
+                <div class="card-tools d-flex align-items-center">
+                    <form method="GET" class="mr-2 d-none d-md-block">
+                        <div class="input-group input-group-sm" style="width: 220px;">
+                            <input type="text" name="search" class="form-control float-right" placeholder="Search company or candidate" value="{{ request('search') }}">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                     <a href="{{ route('admin.export.background-checks') }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-csv"></i> Export CSV
+                        <i class="fas fa-file-csv mr-1"></i> Export CSV
                     </a>
                 </div>
             </div>
             <div class="card-body table-responsive p-0">
-                <table class="table table-hover text-nowrap">
+                <table class="table table-hover table-striped text-nowrap align-middle">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -32,14 +87,25 @@
                     </thead>
                     <tbody>
                         @forelse($requests as $request)
-                            <tr>
+                            <tr class="{{ $request->turnaround_time === 'rush' ? 'table-warning' : '' }}">
                                 <td>{{ $request->id }}</td>
-                                <td>{{ $request->company_name }}</td>
-                                <td>{{ $request->contact_person_name }}</td>
-                                <td>{{ $request->candidate_full_name }}</td>
+                                <td>
+                                    <strong>{{ $request->company_name }}</strong><br>
+                                    <span class="text-muted text-xs">{{ $request->position_job_title ?? 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    {{ $request->contact_person_name }}<br>
+                                    <span class="text-muted text-xs">{{ $request->contact_email }}</span>
+                                </td>
+                                <td>
+                                    {{ $request->candidate_full_name }}<br>
+                                    <span class="text-muted text-xs">{{ $request->candidate_email }}</span>
+                                </td>
                                 <td>
                                     @if(is_array($request->background_check_types) && count($request->background_check_types) > 0)
-                                        <span class="badge badge-info">{{ count($request->background_check_types) }} Types</span>
+                                        @foreach($request->background_check_types as $type)
+                                            <span class="badge badge-info mb-1">{{ $type }}</span>
+                                        @endforeach
                                     @else
                                         <span class="badge badge-secondary">N/A</span>
                                     @endif
